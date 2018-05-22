@@ -6,6 +6,7 @@
  * https://github.com/darlane
  */
 
+
 return [
     'read'     => [
         'host' => env('ORACLE_HOST_FOR_READ'),
