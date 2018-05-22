@@ -12,12 +12,12 @@ namespace OracleLib\Providers;
 use Illuminate\Support\ServiceProvider;
 use OracleLib\Base\Connection;
 use OracleLib\Repositories\ExampleRepository;
-use OracleLib\Repositories\OracleBaseRepository;
+use OracleLib\Repositories\OracleExampleBaseRepository;
 
 
 class OracleServiceProvider extends ServiceProvider
 {
-    use OracleBaseRepository;
+    use OracleExampleBaseRepository;
 
     /**
      * Bootstrap any application services.
