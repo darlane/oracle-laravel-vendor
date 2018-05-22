@@ -13,8 +13,6 @@ use OracleLib\Exceptions\OracleBaseException;
 
 class Oracle
 {
-    const ORACLE_EMPTY_MESSAGE = '                                                                                                                             ';
-
     /**
      * @var resource
      */
@@ -65,8 +63,7 @@ class Oracle
 
         return [$connection, $statement];
     }
-    
-    
+
 
     /**
      * @param $select
@@ -75,20 +72,21 @@ class Oracle
      * @return mixed
      * @throws OracleBaseException
      */
-    protected function select($select, array $args = [], $type = 'write')
+    protected function select($select, array $args = [], $type = 'read')
     {
         $sql = $select;
         foreach ($args as $arg_name => $arg_val) {
             $sql = str_replace(':'.$arg_name, $arg_val, $sql);
         }
 
-        list($connection, $statement) = $this->getConnectionAndStatement($type, $sql);
+        [$connection, $statement] = $this->getConnectionAndStatement($type, $sql);
 
         oci_execute($statement, OCI_COMMIT_ON_SUCCESS);
-        oci_fetch($statement);
-
-
-        return oci_result($statement, 'ID_ABON');
+        $result = [];
+        while ($row = oci_fetch_array($statement, OCI_BOTH)) {
+            $result[] = $row;
+        }
+        return $result;
     }
 
     /**
