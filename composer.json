@@ -1,0 +1,33 @@
+{
+  "name": "darlane/oracle-laravel-vendor",
+  "description": "Vendor for oracle at laravel",
+  "license": "MIT",
+  "keywords": [
+    "laravel",
+    "php",
+    "oracle",
+    "phporacle"
+  ],
+  "authors": [
+    {
+      "name": "Daniil Krents",
+      "email": "darlanedelin@gmail.com"
+    }
+  ],
+  "require": {
+    "php": "^7.1",
+    "illuminate/support": "^5.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "OracleLib\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "OracleLib\\Providers\\OracleServiceProvider"
+      ]
+    }
+  }
+}
