@@ -8,7 +8,7 @@ namespace OracleLib\Repositories;
  * Class OracleBaseRepository
  * @package OracleLib\Repositories
  */
-trait OracleBaseRepository
+trait OracleExampleBaseRepository
 {
     /**
      * @return ExampleRepository

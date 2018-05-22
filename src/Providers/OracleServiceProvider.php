@@ -33,6 +33,12 @@ class OracleServiceProvider extends ServiceProvider
         $this->app->singleton(ExampleRepository::class, function () {
             return new ExampleRepository(app('oracle'));
         });
+
+        $this->publishes([
+            __DIR__.'/../../config/oracle.php' => config_path('oracle.php'),
+        ], 'config');
+
+        require_once __DIR__.'/../functions.php';
     }
 
     /**
