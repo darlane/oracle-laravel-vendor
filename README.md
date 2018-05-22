@@ -51,3 +51,28 @@ At class, where you wanna use this repo add trait and use it like this:
            $this->testRepository()->test()
        }
     }
+    
+    
+    
+Example call function with cursor:
+
+    $result = $this->execute(
+            [
+                'function'    => 'devdb.get_stat',
+                'return_type' => 'cursor',
+            ],
+            [
+                'p_id_user' => 1,
+            ]);
+    
+    $stats  = array_keys_rename($result['cursor'], [
+        'EXPERIENCE'     => 'experience',
+        'STATUS'         => 'status',
+        'DT              => 'date',
+    ]);
+    $stats  = array_keys_set_type($stats, [
+        'experience'                => 'integer',
+        'status'                    => 'integer',
+        'credit_date'               => 'date',
+    ]);
+
