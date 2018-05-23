@@ -20,10 +20,12 @@ class Oracle
     private $returnTypes;
     private $connectionType = 'read';
     private $returnType;
+    private $clobs;
 
     public function __construct(Connection $connections)
     {
         $this->connection  = $connections;
+        $this->clobs       = [];
         $this->returnTypes = [
             'cursor',
             'ret_val',
@@ -131,15 +133,27 @@ class Oracle
         if ($this->returnType === 'cursor') {
             $customStorage = oci_new_cursor($connection);
         }
+        if ($this->returnType === 'clob') {
+            $customStorage = oci_new_descriptor($connection, OCI_DTYPE_LOB);
+        }
         foreach ($params as $name => $data) {
             if (array_get($data, 'param_type') === 'out') {
                 oci_bind_by_name($statement, ':'.$name, $result[$name], 4100);
                 continue;
             }
+            if (array_get($data, 'data_type') === 'clob') {
+                $clob = oci_new_descriptor($connection, OCI_DTYPE_LOB);
+                $clob->write($result[$name]['value'], OCI_TEMP_BLOB);
+                oci_bind_by_name($statement, ':'.$name, $clob, -1, OCI_B_CLOB);
+                $this->clobs[] = $clob;
+                continue;
+            }
+
             $value = \is_array($data) ? $data['value'] : $data;
             oci_bind_by_name($statement, ':'.$name, $value, \strlen($value));
             unset($value);
         }
+
         if ($this->returnType === 'ret_val') {
             oci_bind_by_name($statement, ':ret_val', $result['ret_val'], 512);
         }
@@ -147,6 +161,11 @@ class Oracle
         if ($this->returnType === 'cursor') {
             oci_bind_by_name($statement, ':cursor', $customStorage, -1, OCI_B_CURSOR);
         }
+
+        if ($this->returnType === 'clob') {
+            oci_bind_by_name($statement, ':clob', $customStorage, -1, OCI_B_CLOB);
+        }
+
         return [$statement, $result, $customStorage];
     }
 
@@ -166,8 +185,14 @@ class Oracle
                 throw new OracleBaseException($err['message'], $err['code']);
             }
             if ($this->returnType === 'cursor') {
-                oci_execute($customStorage, OCI_COMMIT_ON_SUCCESS);
                 oci_fetch_all($customStorage, $result['cursor'], null, null, OCI_FETCHSTATEMENT_BY_ROW);
+            }
+            if ($this->returnType === 'clob') {
+                $result['clob'] = $customStorage->load();
+                $customStorage->free();
+            }
+            foreach ($this->clobs as $clob) {
+                $clob->free();
             }
         } catch (\ErrorException $e) {
             throw new OracleBaseException($e->getMessage(), $e->getCode());
