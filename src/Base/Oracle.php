@@ -101,10 +101,9 @@ class Oracle
     {
         $this->validateConnectionConfig([
             'function'    => 'required',
-            'return_type' => 'required',
         ], $connectionParams);
         $this->setConnectionConfig($connectionParams);
-        $sql = $this->prepareSql($connectionParams['return_type'], $connectionParams['function'], $params);
+        $sql = $this->prepareSql(array_get($connectionParams, 'return_type'), $connectionParams['function'], $params);
 
         [$connection, $statement] = $this->getConnectionAndStatement($this->connectionType, $sql);
         [$statement, $result, $customStorage] = $this->bindParams($connection, $statement, $params);
@@ -112,9 +111,10 @@ class Oracle
         return $this->getResult($statement, $result, $customStorage);
     }
 
-    private function prepareSql(string $returnType, string $function, array $params = [])
+    private function prepareSql($returnType, string $function, array $params = [])
     {
-        $sql = "begin :$returnType := $function(";
+        $return = $returnType!== null ? ":$returnType :=" : '';
+        $sql = "begin $return $function(";
         foreach ($params as $name => $value) {
             $key = ':'.$name.',';
             if (array_get($value, 'data_type') === 'date') {
@@ -143,7 +143,7 @@ class Oracle
             }
             if (array_get($data, 'data_type') === 'clob') {
                 $clob = oci_new_descriptor($connection, OCI_DTYPE_LOB);
-                $clob->write($result[$name]['value'], OCI_TEMP_BLOB);
+                $clob->writeTemporary($result[$name]['value'], OCI_TEMP_BLOB);
                 oci_bind_by_name($statement, ':'.$name, $clob, -1, OCI_B_CLOB);
                 $this->clobs[] = $clob;
                 continue;
