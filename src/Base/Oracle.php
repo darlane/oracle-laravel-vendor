@@ -100,7 +100,7 @@ class Oracle
     public function execute(array $connectionParams, array $params = [])
     {
         $this->validateConnectionConfig([
-            'function'    => 'required',
+            'function' => 'required',
         ], $connectionParams);
         $this->setConnectionConfig($connectionParams);
         $sql = $this->prepareSql(array_get($connectionParams, 'return_type'), $connectionParams['function'], $params);
@@ -113,16 +113,18 @@ class Oracle
 
     private function prepareSql($returnType, string $function, array $params = [])
     {
-        $return = $returnType!== null ? ":$returnType :=" : '';
-        $sql = "begin $return $function(";
+        $return = $returnType !== null ? ":$returnType :=" : '';
+        $sql    = "begin $return $function(";
         foreach ($params as $name => $value) {
             $key = ':'.$name.',';
             if (array_get($value, 'data_type') === 'date') {
                 $key = 'to_date(:'.$key.", 'dd.mm.yyyy hh24:mi:ss'),";
             }
+            if (array_get($value, 'data_type') === 'clob') {
+                $key = 'to_clob(:'.$name."),";
+            }
             $sql .= $key;
         }
-
         return rtrim($sql, ',').'); end;';
     }
 
@@ -141,19 +143,10 @@ class Oracle
                 oci_bind_by_name($statement, ':'.$name, $result[$name], 4100);
                 continue;
             }
-            if (array_get($data, 'data_type') === 'clob') {
-                $clob = oci_new_descriptor($connection, OCI_DTYPE_LOB);
-                $clob->writeTemporary($result[$name]['value'], OCI_TEMP_BLOB);
-                oci_bind_by_name($statement, ':'.$name, $clob, -1, OCI_B_CLOB);
-                $this->clobs[] = $clob;
-                continue;
-            }
-
             $value = \is_array($data) ? $data['value'] : $data;
             oci_bind_by_name($statement, ':'.$name, $value, \strlen($value));
             unset($value);
         }
-
         if ($this->returnType === 'ret_val') {
             oci_bind_by_name($statement, ':ret_val', $result['ret_val'], 512);
         }
