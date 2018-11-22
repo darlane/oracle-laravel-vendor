@@ -190,6 +190,7 @@ class Oracle
         } catch (\ErrorException $e) {
             throw new OracleBaseException($e->getMessage(), $e->getCode());
         }
+
         return $result;
     }
 
